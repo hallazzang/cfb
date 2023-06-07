@@ -13,7 +13,7 @@ type SectorReader struct {
 }
 
 func newSectorReader(r io.ReaderAt, sectorSize, startSector uint32, fat []uint32, offsetResolver func(uint32) int64) (*SectorReader, error) {
-	if startSector < 0 {
+	if int32(startSector) < 0 {
 		return nil, ErrWrongSector
 	} else if s := fat[startSector]; s > maxRegSect && s != endOfChain {
 		return nil, ErrInvalidSectorChain
