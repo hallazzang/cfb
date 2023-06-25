@@ -21,7 +21,7 @@ func newSectorReader(r io.ReaderAt, sectorSize, startSector uint32, fat []uint32
 
 	var sectors []uint32
 	s := startSector
-	for s != endOfChain {
+	for s != endOfChain && s < len(fat) {
 		sectors = append(sectors, s)
 		s = fat[s]
 	}
