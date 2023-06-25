@@ -176,7 +176,9 @@ func (f *File) buildDirectoryTree() error {
 		d.path = ps
 		walk(d.raw.ChildID, d, ps)
 	}
-	walk(ds[0].raw.ChildID, ds[0], []string{})
+	if len(ds) > 0 {
+		walk(ds[0].raw.ChildID, ds[0], []string{})
+	}
 
 	f.directoryEntries = ds
 	return nil
