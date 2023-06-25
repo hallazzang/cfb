@@ -39,12 +39,14 @@ func (f *File) Header() *FileHeader {
 
 func (f *File) Objects() ([]Object, error) {
 	var os []Object
-	for _, d := range f.directoryEntries[1:] {
-		o, err := d.object()
-		if err != nil {
-			return nil, err
+	if len(f.directoryEntries) > 1 {
+		for _, d := range f.directoryEntries[1:] {
+			o, err := d.object()
+			if err != nil {
+				return nil, err
+			}
+			os = append(os, o)
 		}
-		os = append(os, o)
 	}
 	return os, nil
 }
