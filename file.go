@@ -74,9 +74,18 @@ func (f *File) Get(path string) (Object, error) {
 	return d.object()
 }
 
+func minUint32(v1, v2 uint32) uint32 {
+	if v1 < v2 {
+		return v1
+	}
+	return v2
+}
+
 func (f *File) buildFAT() error {
-	sectors := make([]uint32, f.header.raw.NumberOfFATSectors)
-	copy(sectors, f.header.raw.DIFAT[:f.header.raw.NumberOfFATSectors])
+	// https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/05060311-bfce-4b12-874d-71fd4ce63aea
+	minSections := minUint32(f.header.raw.NumberOfFATSectors, uint32(len(f.header.raw.DIFAT)))
+	sectors := make([]uint32, minSections)
+	copy(sectors, f.header.raw.DIFAT[:minSections])
 
 	if f.header.raw.NumberOfDIFATSectors > 0 {
 		s := f.header.raw.FirstDIFATSectorLocation
