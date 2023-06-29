@@ -175,7 +175,7 @@ func (f *File) buildDirectoryTree() error {
 		if id == noStream {
 			return
 		}
-		if uint32(len(ds)) < id {
+		if uint32(len(ds)) =< id {
 			return
 		}
 		d := ds[id]
