@@ -1,6 +1,9 @@
 package cfb
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
 type SectorReader struct {
 	r              io.ReaderAt
@@ -21,7 +24,8 @@ func newSectorReader(r io.ReaderAt, sectorSize, startSector uint32, fat []uint32
 
 	var sectors []uint32
 	s := startSector
-	for s != endOfChain && int(s) < len(fat) && s >= 0 {
+	for i := 0; s != endOfChain && int(s) < len(fat) && s >= 0 && i < len(fat); i++ {
+		fmt.Println("S=", s, len(fat), sectorSize)
 		sectors = append(sectors, s)
 		s = fat[s]
 	}
