@@ -1,6 +1,7 @@
 package cfb
 
 import (
+	// "fmt"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -39,12 +40,14 @@ func (f *File) Header() *FileHeader {
 
 func (f *File) Objects() ([]Object, error) {
 	var os []Object
-	for _, d := range f.directoryEntries[1:] {
-		o, err := d.object()
-		if err != nil {
-			return nil, err
+	if len(f.directoryEntries) > 1 {
+		for _, d := range f.directoryEntries[1:] {
+			o, err := d.object()
+			if err != nil {
+				return nil, err
+			}
+			os = append(os, o)
 		}
-		os = append(os, o)
 	}
 	return os, nil
 }
@@ -72,9 +75,18 @@ func (f *File) Get(path string) (Object, error) {
 	return d.object()
 }
 
+func minUint32(v1, v2 uint32) uint32 {
+	if v1 < v2 {
+		return v1
+	}
+	return v2
+}
+
 func (f *File) buildFAT() error {
-	sectors := make([]uint32, f.header.raw.NumberOfFATSectors)
-	copy(sectors, f.header.raw.DIFAT[:f.header.raw.NumberOfFATSectors])
+	// https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-cfb/05060311-bfce-4b12-874d-71fd4ce63aea
+	minSections := minUint32(f.header.raw.NumberOfFATSectors, uint32(len(f.header.raw.DIFAT)))
+	sectors := make([]uint32, minSections)
+	copy(sectors, f.header.raw.DIFAT[:minSections])
 
 	if f.header.raw.NumberOfDIFATSectors > 0 {
 		s := f.header.raw.FirstDIFATSectorLocation
@@ -158,12 +170,29 @@ func (f *File) buildDirectoryTree() error {
 	if err != nil {
 		return err
 	}
-
+	// fmt.Println("total directoies", len(ds))
+	const maxLoop = 20000
+	idMap := make(map[uint32]bool)
 	var walk func(uint32, *DirectoryEntry, []string)
 	walk = func(id uint32, parent *DirectoryEntry, prefixes []string) {
+		// fmt.Println("walk id =", id, "pid = ", parent.id, len(prefixes))
+		// fmt.Println("walk id = ", id, noStream)
 		if id == noStream {
 			return
 		}
+		if uint32(len(ds)) <= id {
+			return
+		}
+		if idMap[id] {
+			// fmt.Println("ID exists")
+			return
+		}
+		if len(idMap) > maxLoop {
+			return
+		}
+
+		idMap[id] = true
+
 		d := ds[id]
 		parent.children = append(parent.children, d)
 
@@ -176,7 +205,9 @@ func (f *File) buildDirectoryTree() error {
 		d.path = ps
 		walk(d.raw.ChildID, d, ps)
 	}
-	walk(ds[0].raw.ChildID, ds[0], []string{})
+	if len(ds) > 0 {
+		walk(ds[0].raw.ChildID, ds[0], []string{})
+	}
 
 	f.directoryEntries = ds
 	return nil

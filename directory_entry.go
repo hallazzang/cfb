@@ -54,6 +54,8 @@ func (d *DirectoryEntry) Name() string {
 	if d.raw.DirectoryEntryNameLength < 2 {
 		return ""
 	}
+	// fmt.Println("name len =", len(d.raw.DirectoryEntryName))
+	// fmt.Println("name DirectoryEntryNameLength =", d.raw.DirectoryEntryNameLength)
 	return decodeUTF16String(d.raw.DirectoryEntryName[:d.raw.DirectoryEntryNameLength-2])
 }
 

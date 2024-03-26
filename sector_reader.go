@@ -1,6 +1,8 @@
 package cfb
 
-import "io"
+import (
+	"io"
+)
 
 type SectorReader struct {
 	r              io.ReaderAt
@@ -13,7 +15,7 @@ type SectorReader struct {
 }
 
 func newSectorReader(r io.ReaderAt, sectorSize, startSector uint32, fat []uint32, offsetResolver func(uint32) int64) (*SectorReader, error) {
-	if startSector < 0 {
+	if int32(startSector) < 0 {
 		return nil, ErrWrongSector
 	} else if s := fat[startSector]; s > maxRegSect && s != endOfChain {
 		return nil, ErrInvalidSectorChain
@@ -21,7 +23,7 @@ func newSectorReader(r io.ReaderAt, sectorSize, startSector uint32, fat []uint32
 
 	var sectors []uint32
 	s := startSector
-	for s != endOfChain {
+	for i := 0; s != endOfChain && int(s) < len(fat) && s >= 0 && i < len(fat); i++ {
 		sectors = append(sectors, s)
 		s = fat[s]
 	}
