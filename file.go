@@ -1,6 +1,7 @@
 package cfb
 
 import (
+	// "fmt"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -169,15 +170,29 @@ func (f *File) buildDirectoryTree() error {
 	if err != nil {
 		return err
 	}
-
+	// fmt.Println("total directoies", len(ds))
+	const maxLoop = 20000
+	idMap := make(map[uint32]bool)
 	var walk func(uint32, *DirectoryEntry, []string)
 	walk = func(id uint32, parent *DirectoryEntry, prefixes []string) {
+		// fmt.Println("walk id =", id, "pid = ", parent.id, len(prefixes))
+		// fmt.Println("walk id = ", id, noStream)
 		if id == noStream {
 			return
 		}
 		if uint32(len(ds)) <= id {
 			return
 		}
+		if idMap[id] {
+			// fmt.Println("ID exists")
+			return
+		}
+		if len(idMap) > maxLoop {
+			return
+		}
+
+		idMap[id] = true
+
 		d := ds[id]
 		parent.children = append(parent.children, d)
 
